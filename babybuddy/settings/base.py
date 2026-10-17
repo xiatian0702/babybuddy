@@ -185,7 +185,7 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 
-LANGUAGE_CODE = "en-US"
+LANGUAGE_CODE = os.environ.get("LANGUAGE_CODE") or "zh-hans"
 
 LOCALE_PATHS = [
     os.path.join(BASE_DIR, "locale"),

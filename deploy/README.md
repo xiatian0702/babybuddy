@@ -72,6 +72,8 @@ docker compose up -d --remove-orphans
 ## 注意
 
 - 云服务器安全组需要放行 80 端口（如需 HTTPS 再放行 443）。
+- 界面默认语言为简体中文（`LANGUAGE_CODE=zh-hans`），可在 `.env` 中用
+  `LANGUAGE_CODE` 覆盖；每个用户也能在“用户设置”里单独选择语言。
 - 前端静态资源（`static/` 下的构建产物）随仓库提交。如果只改了 SCSS/JS 源码，
   需要本地执行 `npm ci && npx gulp build` 并把生成的 `static/` 一并提交。
 - 宿主机上的 nginx 服务会被停用，因为 `nginx` 容器占用了 80 端口。
