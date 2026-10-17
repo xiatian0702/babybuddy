@@ -1,0 +1,14 @@
+[Unit]
+Description=Watch the Baby Buddy checkout for git updates
+
+[Path]
+# A successful `git pull` updates the branch ref, the reflog and (on branch
+# switches) HEAD. Watching all three keeps the trigger working even if git
+# packs the refs.
+PathModified=/workspace/babybuddy/.git/refs/heads/master
+PathModified=/workspace/babybuddy/.git/logs/HEAD
+PathModified=/workspace/babybuddy/.git/HEAD
+Unit=babybuddy-deploy.service
+
+[Install]
+WantedBy=multi-user.target

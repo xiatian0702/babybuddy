@@ -1,0 +1,9 @@
+[Unit]
+Description=Deploy Baby Buddy after a git pull
+After=network.target babybuddy.service
+
+[Service]
+Type=oneshot
+ExecStart=/workspace/babybuddy/deploy/deploy.sh
+TimeoutStartSec=900
+Nice=10

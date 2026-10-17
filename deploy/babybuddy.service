@@ -1,0 +1,25 @@
+[Unit]
+Description=Baby Buddy web application (gunicorn)
+Documentation=https://github.com/xiatian0702/babybuddy
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/workspace/babybuddy
+EnvironmentFile=-/workspace/babybuddy/.env
+Environment=PYTHONUNBUFFERED=1
+ExecStartPre=/workspace/babybuddy/.venv/bin/python /workspace/babybuddy/manage.py migrate --noinput
+ExecStart=/workspace/babybuddy/.venv/bin/gunicorn babybuddy.wsgi:application \
+    --bind 127.0.0.1:8000 \
+    --workers 2 \
+    --timeout 60 \
+    --access-logfile - \
+    --error-logfile -
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
