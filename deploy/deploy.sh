@@ -23,11 +23,11 @@ for _ in $(seq 1 30); do
     sleep 1
 done
 
-# Rebuild only when requirements.txt actually changed.
-new_sum="$(sha256sum requirements.txt | cut -d' ' -f1)"
+# Rebuild only when the dependency set or the image definition changed.
+new_sum="$(cat requirements.txt Dockerfile | sha256sum | cut -d' ' -f1)"
 old_sum="$(cat "$STATE_DIR/requirements.sha256" 2>/dev/null || true)"
 if [ "$new_sum" != "$old_sum" ]; then
-    echo "[deploy] requirements.txt changed, rebuilding web image"
+    echo "[deploy] requirements.txt/Dockerfile changed, rebuilding web image"
     docker compose build web
     echo "$new_sum" > "$STATE_DIR/requirements.sha256"
 fi
@@ -35,7 +35,7 @@ fi
 echo "[deploy] Ensuring containers are running"
 docker compose up -d --remove-orphans
 
-echo "[deploy] Restarting web container (runs migrations on start)"
-docker compose restart web
+echo "[deploy] Recreating web container (runs migrations on start)"
+docker compose up -d --force-recreate --no-deps web
 
 echo "[deploy] Done at $(date -Is): $(git rev-parse --short HEAD)"

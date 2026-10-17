@@ -62,7 +62,7 @@ done
 
 echo "[install] Building web image"
 docker compose build web
-sha256sum requirements.txt | cut -d' ' -f1 > "$STATE_DIR/requirements.sha256"
+cat requirements.txt Dockerfile | sha256sum | cut -d' ' -f1 > "$STATE_DIR/requirements.sha256"
 
 echo "[install] Starting containers"
 docker compose up -d --remove-orphans

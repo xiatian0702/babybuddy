@@ -13,6 +13,9 @@ ARG PIP_INDEX_URL=https://pypi.org/simple
 RUN sed -i '/^-i /d' requirements.txt \
     && pip install --no-cache-dir --index-url "$PIP_INDEX_URL" -r requirements.txt
 
+# manage.py and wsgi.py do not default this, so provide it in the image.
+ENV DJANGO_SETTINGS_MODULE=babybuddy.settings.base
+
 COPY . .
 
 EXPOSE 8000

@@ -16,8 +16,8 @@
 - 数据库：`data/db.sqlite3`；上传文件：`media/`（都在宿主机上，pull 不会覆盖）。
 - 环境变量：`.env`（首次安装自动生成，已被 git 忽略）。
 - `git pull` 更新 `master` 后，systemd path 单元监听到 ref 变化，自动执行
-  `deploy/deploy.sh`：依赖变化时重建镜像，然后重启 `web` 容器；容器入口会先
-  执行 `manage.py migrate`。
+  `deploy/deploy.sh`：`requirements.txt` 或 `Dockerfile` 变化时重建镜像，然后
+  重建 `web` 容器；容器入口会先执行 `manage.py migrate`。
 - 静态文件由 `nginx` 容器直接读取挂载的 `static/` 目录，不经过 Django。
 
 ## 首次安装
