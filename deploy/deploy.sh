@@ -32,10 +32,7 @@ if [ "$new_sum" != "$old_sum" ]; then
     echo "$new_sum" > "$STATE_DIR/requirements.sha256"
 fi
 
-echo "[deploy] Ensuring containers are running"
-docker compose up -d --remove-orphans
-
 echo "[deploy] Recreating web container (runs migrations on start)"
-docker compose up -d --force-recreate --no-deps web
+docker compose up -d --remove-orphans --force-recreate web
 
 echo "[deploy] Done at $(date -Is): $(git rev-parse --short HEAD)"
