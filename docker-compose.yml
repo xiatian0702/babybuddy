@@ -1,0 +1,30 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        # Aliyun mirror; override with PIP_INDEX_URL if needed.
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple/}
+    image: babybuddy:local
+    restart: unless-stopped
+    env_file:
+      - .env
+    working_dir: /app
+    # The checkout is mounted, so `git pull` + a container restart is enough
+    # to run the new code. Database and uploads stay on the host.
+    volumes:
+      - ./:/app
+    expose:
+      - "8000"
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./static:/srv/static:ro
+      - ./media:/srv/media:ro

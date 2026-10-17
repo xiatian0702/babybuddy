@@ -1,0 +1,11 @@
+.git
+.gitignore
+.venv
+node_modules
+data
+media
+static
+*.pyc
+__pycache__
+bb.bundle
+bb-images.tar

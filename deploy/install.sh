@@ -4,8 +4,8 @@
 #   1. Clone https://github.com/xiatian0702/babybuddy.git to /workspace/babybuddy
 #   2. sudo /workspace/babybuddy/deploy/install.sh
 #
-# Afterwards every `git pull` in /workspace/babybuddy triggers
-# deploy/deploy.sh automatically (migrations + service restart).
+# Base images python:3.12-slim and nginx:alpine must be available locally
+# (loaded from a `docker save` tar on this server) or reachable from a registry.
 set -euo pipefail
 
 APP_DIR="/workspace/babybuddy"
@@ -24,18 +24,17 @@ fi
 cd "$APP_DIR"
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get update -qq
-apt-get install -y -qq python3-venv nginx ca-certificates
+if ! command -v docker >/dev/null 2>&1; then
+    apt-get update -qq
+    apt-get install -y -qq docker.io
+fi
+if ! docker compose version >/dev/null 2>&1; then
+    apt-get update -qq
+    apt-get install -y -qq docker-compose-v2
+fi
+systemctl enable --now docker
 
 mkdir -p "$STATE_DIR" "$APP_DIR/data" "$APP_DIR/media"
-
-if [ ! -x "$APP_DIR/.venv/bin/python" ]; then
-    python3 -m venv "$APP_DIR/.venv"
-fi
-
-"$APP_DIR/.venv/bin/pip" install --disable-pip-version-check -q --upgrade pip
-"$APP_DIR/.venv/bin/pip" install --disable-pip-version-check -q -r requirements.txt
-sha256sum requirements.txt | cut -d' ' -f1 > "$STATE_DIR/requirements.sha256"
 
 if [ ! -f "$APP_DIR/.env" ]; then
     secret="$(python3 -c 'import secrets; print(secrets.token_urlsafe(64))')"
@@ -48,23 +47,34 @@ EOF
     chmod 600 "$APP_DIR/.env"
 fi
 
-install -m 644 deploy/babybuddy.service /etc/systemd/system/babybuddy.service
+# The nginx container publishes port 80; a host nginx would conflict.
+if systemctl is-active --quiet nginx; then
+    systemctl disable --now nginx
+fi
+
+# Base images: use local ones if present, otherwise try a registry.
+for image in python:3.12-slim nginx:alpine; do
+    if ! docker image inspect "$image" >/dev/null 2>&1; then
+        echo "[install] Pulling $image"
+        docker pull "$image"
+    fi
+done
+
+echo "[install] Building web image"
+docker compose build web
+sha256sum requirements.txt | cut -d' ' -f1 > "$STATE_DIR/requirements.sha256"
+
+echo "[install] Starting containers"
+docker compose up -d --remove-orphans
+
 install -m 644 deploy/babybuddy-deploy.service /etc/systemd/system/babybuddy-deploy.service
 install -m 644 deploy/babybuddy-deploy.path /etc/systemd/system/babybuddy-deploy.path
-
-install -m 644 deploy/nginx.conf /etc/nginx/sites-available/babybuddy
-ln -sfn /etc/nginx/sites-available/babybuddy /etc/nginx/sites-enabled/babybuddy
-rm -f /etc/nginx/sites-enabled/default
-
 systemctl daemon-reload
-systemctl enable babybuddy.service babybuddy-deploy.path
-systemctl restart babybuddy.service
+systemctl enable babybuddy-deploy.path
 systemctl restart babybuddy-deploy.path
 
-nginx -t
-systemctl enable nginx
-systemctl restart nginx
-
+echo
+docker compose ps
 echo
 echo "Baby Buddy is running on port 80 (default login: admin / admin - change it)."
-echo "Logs: journalctl -u babybuddy -f"
+echo "Logs: docker compose logs -f web"
